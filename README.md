@@ -11,7 +11,7 @@ On a 235 MB file with 5 million rows, reading every field as a `String` takes 0.
 Add the package to your `Package.swift`:
 
 ```swift
-.package(url: "https://github.com/malcommac/FastCSV.git", from: "0.1.0")
+.package(url: "https://github.com/malcommac/FastCSV.git", from: "1.0.0")
 ```
 
 Then add `"FastCSV"` to your target's dependencies.
