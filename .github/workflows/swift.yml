@@ -1,0 +1,37 @@
+name: Swift
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  macos:
+    name: macOS
+    runs-on: xcode-27
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - name: Show Swift version
+        run: swift --version
+      - name: Build
+        run: swift build -c release
+      - name: Test
+        run: swift test --skip BenchmarkTests
+
+  linux:
+    name: Linux
+    runs-on: ubuntu-latest
+    container: swift:6.4-noble
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - name: Show Swift version
+        run: swift --version
+      - name: Build
+        run: swift build -c release
+      - name: Test
+        run: swift test --skip BenchmarkTests
