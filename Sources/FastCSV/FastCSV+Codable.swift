@@ -1,24 +1,24 @@
 import Foundation
 
-// MARK: - Supporto su CSVRow
+// MARK: - CSVRow support
 
 extension CSVRow {
-    /// Vero se il campo non contiene nulla, virgolette escluse.
-    /// Esiste per non costruire una `String` solo per scoprire che è vuota.
+    /// True if the field holds nothing, quotes excluded.
+    /// Exists to avoid building a `String` just to find out it is empty.
     public func isFieldEmpty(at index: Int) -> Bool {
         unquotedRange(at: index).isEmpty
     }
 }
 
-// MARK: - API pubblica
+// MARK: - Public API
 
 extension CSVReader {
-    /// Decodifica ogni riga nel tipo indicato.
+    /// Decodes every row into the given type.
     ///
-    /// Più lento di `forEachRow` con gli accessori tipizzati: ogni proprietà
-    /// costa un hash di stringa per risolvere la colonna, e quella ricerca la
-    /// fa il codice generato dal compilatore, quindi non è sollevabile fuori dal ciclo.
-    /// Per i file grandi resta preferibile `forEachRow`.
+    /// Slower than `forEachRow` with the typed accessors: each property costs a
+    /// string hash to resolve its column, and that lookup happens in
+    /// compiler-generated code, so it cannot be hoisted out of the loop.
+    /// For large files, prefer `forEachRow`.
     public func decode<T: Decodable>(_ type: T.Type, _ body: (T) throws -> Void) throws {
         let columnIndex = Dictionary(
             columnNames.enumerated().map { ($1, $0) },
@@ -41,7 +41,7 @@ extension CSVReader {
     }
 }
 
-// MARK: - Decoder di riga
+// MARK: - Row decoder
 
 struct CSVRowDecoder: Decoder {
     let row: CSVRow
@@ -58,17 +58,17 @@ struct CSVRowDecoder: Decoder {
     func unkeyedContainer() throws -> UnkeyedDecodingContainer {
         throw DecodingError.typeMismatch([Any].self, .init(
             codingPath: codingPath,
-            debugDescription: "Una riga CSV è un insieme di colonne con nome, non un array"))
+            debugDescription: "A CSV row is a set of named columns, not an array"))
     }
 
     func singleValueContainer() throws -> SingleValueDecodingContainer {
         throw DecodingError.typeMismatch(Any.self, .init(
             codingPath: codingPath,
-            debugDescription: "Una riga CSV non è un valore singolo"))
+            debugDescription: "A CSV row is not a single value"))
     }
 }
 
-// MARK: - Container per chiave
+// MARK: - Keyed container
 
 struct CSVKeyedContainer<Key: CodingKey>: KeyedDecodingContainerProtocol {
     let row: CSVRow
@@ -82,18 +82,18 @@ struct CSVKeyedContainer<Key: CodingKey>: KeyedDecodingContainerProtocol {
         return i < row.count
     }
 
-    /// Colonna assente e riga corta sono due errori diversi, e conviene distinguerli:
-    /// il primo dice che il tipo non corrisponde al file, il secondo quale riga è sporca.
+    /// A missing column and a short row are different errors, worth telling apart:
+    /// the first says the type doesn't match the file, the second which row is dirty.
     private func index(for key: Key) throws -> Int {
         guard let i = columnIndex[key.stringValue] else {
             throw DecodingError.keyNotFound(key, .init(
                 codingPath: codingPath,
-                debugDescription: "Nessuna colonna '\(key.stringValue)' nell'header"))
+                debugDescription: "No column '\(key.stringValue)' in the header"))
         }
         guard i < row.count else {
             throw DecodingError.valueNotFound(Any.self, .init(
                 codingPath: codingPath + [key],
-                debugDescription: "La riga ha \(row.count) campi, serviva l'indice \(i)"))
+                debugDescription: "The row has \(row.count) fields, index \(i) was needed"))
         }
         return i
     }
@@ -101,7 +101,7 @@ struct CSVKeyedContainer<Key: CodingKey>: KeyedDecodingContainerProtocol {
     private func corrupted(_ key: Key, _ type: Any.Type, _ i: Int) -> DecodingError {
         DecodingError.dataCorrupted(.init(
             codingPath: codingPath + [key],
-            debugDescription: "'\(row.field(at: i))' non è un \(type)"))
+            debugDescription: "'\(row.field(at: i))' is not a \(type)"))
     }
 
     func decodeNil(forKey key: Key) throws -> Bool {
@@ -134,8 +134,8 @@ struct CSVKeyedContainer<Key: CodingKey>: KeyedDecodingContainerProtocol {
         return v
     }
 
-    /// Gli interi stretti passano tutti da qui: `T(exactly:)` rifiuta i fuori intervallo
-    /// invece di troncarli, quindi un Int8 che riceve 300 dà errore e non 44.
+    /// All narrow integers go through here: `T(exactly:)` rejects out-of-range values
+    /// instead of truncating them, so an Int8 receiving 300 fails rather than becoming 44.
     private func narrow<T: FixedWidthInteger>(_ key: Key, _ type: T.Type) throws -> T {
         let i = try index(for: key)
         guard let wide = row.intField(at: i), let v = T(exactly: wide) else {
@@ -154,8 +154,8 @@ struct CSVKeyedContainer<Key: CodingKey>: KeyedDecodingContainerProtocol {
     func decode(_ t: UInt32.Type, forKey k: Key) throws -> UInt32 { try narrow(k, t) }
     func decode(_ t: UInt64.Type, forKey k: Key) throws -> UInt64 { try narrow(k, t) }
 
-    /// Tutto ciò che non è primitivo (enum con raw value, tipi custom) viene
-    /// decodificato da un decoder che vede solo quel campo.
+    /// Anything non-primitive (raw-value enums, custom types) is decoded
+    /// by a decoder that sees only that field.
     func decode<T: Decodable>(_ type: T.Type, forKey key: Key) throws -> T {
         let i = try index(for: key)
         return try T(from: CSVFieldDecoder(row: row, index: i, codingPath: codingPath + [key]))
@@ -166,13 +166,13 @@ struct CSVKeyedContainer<Key: CodingKey>: KeyedDecodingContainerProtocol {
     ) throws -> KeyedDecodingContainer<NestedKey> {
         throw DecodingError.typeMismatch([String: Any].self, .init(
             codingPath: codingPath + [key],
-            debugDescription: "Un CSV è piatto: nessun contenitore annidato"))
+            debugDescription: "CSV is flat: no nested containers"))
     }
 
     func nestedUnkeyedContainer(forKey key: Key) throws -> UnkeyedDecodingContainer {
         throw DecodingError.typeMismatch([Any].self, .init(
             codingPath: codingPath + [key],
-            debugDescription: "Un CSV è piatto: nessun array annidato"))
+            debugDescription: "CSV is flat: no nested arrays"))
     }
 
     func superDecoder() throws -> Decoder {
@@ -184,7 +184,7 @@ struct CSVKeyedContainer<Key: CodingKey>: KeyedDecodingContainerProtocol {
     }
 }
 
-// MARK: - Decoder di singolo campo
+// MARK: - Single-field decoder
 
 struct CSVFieldDecoder: Decoder {
     let row: CSVRow
@@ -195,13 +195,13 @@ struct CSVFieldDecoder: Decoder {
     func container<Key: CodingKey>(keyedBy type: Key.Type) throws -> KeyedDecodingContainer<Key> {
         throw DecodingError.typeMismatch([String: Any].self, .init(
             codingPath: codingPath,
-            debugDescription: "Un campo CSV è un valore singolo, non un oggetto"))
+            debugDescription: "A CSV field is a single value, not an object"))
     }
 
     func unkeyedContainer() throws -> UnkeyedDecodingContainer {
         throw DecodingError.typeMismatch([Any].self, .init(
             codingPath: codingPath,
-            debugDescription: "Un campo CSV è un valore singolo, non un array"))
+            debugDescription: "A CSV field is a single value, not an array"))
     }
 
     func singleValueContainer() throws -> SingleValueDecodingContainer {
@@ -217,7 +217,7 @@ struct CSVSingleValueContainer: SingleValueDecodingContainer {
     private func corrupted(_ type: Any.Type) -> DecodingError {
         DecodingError.dataCorrupted(.init(
             codingPath: codingPath,
-            debugDescription: "'\(row.field(at: index))' non è un \(type)"))
+            debugDescription: "'\(row.field(at: index))' is not a \(type)"))
     }
 
     func decodeNil() -> Bool {

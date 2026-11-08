@@ -160,20 +160,19 @@ struct Benchmark {
     @Test func parseAndAllocateFastCSV() throws {
         let clock = ContinuousClock()
 
-        // Warmup: one empty pass loads the 260 MB into page cache.
-        // Without it, the first measurement times disk, not code — the same read
-        // takes ~0.19s with cached pages vs ~0.44s without caching.
+        // Warmup: one counting pass loads the file into page cache.
+        // Without it, the first measurement times disk, not code.
         do {
             let warmup = try CSVReader(fileURL: gtfsURL, config: .init(hasHeaders: true))
             #expect(warmup.rowCount > 0)
         }
 
-        // 1. Indexing: init performs mmap, file sniffing, and offset scanning
+        // 1. Opening: init validates the file and reads the header row
         let rssBefore = residentMemoryMB()
         let t0 = clock.now
         let reader = try CSVReader(fileURL: gtfsURL, config: .init(hasHeaders: true))
-        let indexing = clock.now - t0
-        let rssAfterIndex = residentMemoryMB()
+        let opening = clock.now - t0
+        let rssAfterOpen = residentMemoryMB()
 
         guard let iTrip = reader.columnIndex("trip_id"),
               let iArr = reader.columnIndex("arrival_time"),
@@ -255,7 +254,7 @@ struct Benchmark {
         print("""
 
         ── parse and allocate FastCSV (\(reader.rowCount) rows) ──
-          1. indexing                    \(indexing)   (RSS +\(String(format: "%.0f", rssAfterIndex - rssBefore)) MB)
+          1. opening                     \(opening)   (RSS +\(String(format: "%.0f", rssAfterOpen - rssBefore)) MB)
           2a. parse only                 \(splitOnly)
           2b. with typed readers         \(direct)
              └─ allocation overhead       \(String(format: "%.3f", allocateDirect))s

@@ -2,9 +2,27 @@ import Foundation
 import Testing
 @testable import FastCSV
 
+/// Row start offsets found by walking `rowEnd` across the whole input.
+private func rowOffsets(_ bytes: [UInt8], trackQuotes: Bool) -> [Int] {
+    bytes.withUnsafeBufferPointer { buf in
+        var offsets = [0]
+        var position = 0
+        while position < buf.count,
+              let newline = CSVReader.rowEnd(
+                base: buf.baseAddress!, from: position, count: buf.count,
+                quoteByte: 0x22, delimiterByte: 0x2C, trackQuotes: trackQuotes
+              ) {
+            position = newline + 1
+            offsets.append(position)
+        }
+        if offsets.last == buf.count { offsets.removeLast() }
+        return offsets
+    }
+}
+
 // Measure performance reading a large CSV file with warm cache.
 // Run with: swift test -c release -Xswiftc -enable-testing
-@Test func decodeLongCSV() async throws {
+@Test(.enabled(if: gtfsAvailable)) func decodeLongCSV() async throws {
     var config = CSVReaderConfig()
     config.hasHeaders = true
 
@@ -36,15 +54,7 @@ import Testing
     // index    0  1  2  3  4  5  6  7  8  9
     let bytes = Array("a,\"x\ny\",b\n1,2,3\n".utf8)
     
-    let offsets = bytes.withUnsafeBufferPointer { buf in
-        CSVReader.indexLines(
-            base: buf.baseAddress!,
-            count: buf.count,
-            quoteByte: 0x22,
-            delimiterByte: 0x2C,
-            trackQuotes: true
-        )
-    }
+    let offsets = rowOffsets(bytes, trackQuotes: true)
 
     #expect(offsets == [0, 10])
 }
@@ -59,11 +69,11 @@ import Testing
 // Swift multiline literal lacks final \n, testing row termination by byte count too.
 @Test func readCSVWithTraps() throws {
     let csv = #"""
-    prodotto,note,prezzo
-    monitor 24" full HD,niente,199
-    tastiera,"riga uno
-    riga due",49
-    mouse,"disse ""ciao""",19
+    product,note,price
+    monitor 24" full HD,nothing,199
+    keyboard,"line one
+    line two",49
+    mouse,"said ""hello""",19
     """#
     
     let url = URL(fileURLWithPath: NSTemporaryDirectory())
@@ -75,7 +85,7 @@ import Testing
     
     let reader = try CSVReader(fileURL: url, config: .init(hasHeaders: true))
     
-    #expect(reader.columnNames == ["prodotto", "note", "prezzo"])
+    #expect(reader.columnNames == ["product", "note", "price"])
     #expect(reader.rowCount == 3)
 
     var rows: [[String]] = []
@@ -83,9 +93,9 @@ import Testing
         rows.append((0..<row.count).map { row.field(at: $0) })
     }
 
-    #expect(rows[0] == ["monitor 24\" full HD", "niente", "199"])
-    #expect(rows[1] == ["tastiera", "riga uno\nriga due", "49"])
-    #expect(rows[2] == ["mouse", "disse \"ciao\"", "19"])
+    #expect(rows[0] == ["monitor 24\" full HD", "nothing", "199"])
+    #expect(rows[1] == ["keyboard", "line one\nline two", "49"])
+    #expect(rows[2] == ["mouse", "said \"hello\"", "19"])
 }
 
 // Verify fast path splits on every newline (no quote tracking).
@@ -95,25 +105,17 @@ import Testing
 @Test func fastPathSplitsOnEveryNewline() {
     let bytes = Array("a,\"x\ny\",b\n1,2,3\n".utf8)
     
-    let offsets = bytes.withUnsafeBufferPointer { buf in
-        CSVReader.indexLines(
-            base: buf.baseAddress!,
-            count: buf.count,
-            quoteByte: 0x22,
-            delimiterByte: 0x2C,
-            trackQuotes: false
-        )
-    }
+    let offsets = rowOffsets(bytes, trackQuotes: false)
 
     #expect(offsets == [0, 5, 10])
 }
 
 // Verify Windows \r\n line endings are handled (trim \r correctly).
 // Here the literal is a normal string (not raw), so \r\n are real escape sequences in the file.
-// Broken \r trimming would give ["prodotto", "prezzo\r"] instead of expected.
+// Broken \r trimming would give ["product", "price\r"] instead of expected.
 // This is a prod bug that manifests as "string comparison never matches" puzzles.
 @Test func handlesWindowsLineEndings() throws {
-    let csv = "prodotto,prezzo\r\nmouse,19\r\ntastiera,49\r\n"
+    let csv = "product,price\r\nmouse,19\r\nkeyboard,49\r\n"
 
     let url = URL(fileURLWithPath: NSTemporaryDirectory())
         .appendingPathComponent("fastcsv-\(UUID().uuidString).csv")
@@ -122,7 +124,7 @@ import Testing
 
     let reader = try CSVReader(fileURL: url, config: .init(hasHeaders: true))
 
-    #expect(reader.columnNames == ["prodotto", "prezzo"])
+    #expect(reader.columnNames == ["product", "price"])
     #expect(reader.rowCount == 2)
 
     var rows: [[String]] = []
@@ -130,12 +132,12 @@ import Testing
         rows.append((0..<row.count).map { row.field(at: $0) })
     }
 
-    #expect(rows == [["mouse", "19"], ["tastiera", "49"]])
+    #expect(rows == [["mouse", "19"], ["keyboard", "49"]])
 }
 
 // Verify UTF-8 BOM is skipped at file start.
 @Test func skipsUTF8BOM() throws {
-    let csv = "\u{FEFF}prodotto,prezzo\r\nmouse,19\r\ntastiera,49\r\n"
+    let csv = "\u{FEFF}product,price\r\nmouse,19\r\nkeyboard,49\r\n"
 
     let url = URL(fileURLWithPath: NSTemporaryDirectory())
         .appendingPathComponent("fastcsv-\(UUID().uuidString).csv")
@@ -144,7 +146,7 @@ import Testing
 
     let reader = try CSVReader(fileURL: url, config: .init(hasHeaders: true))
 
-    #expect(reader.columnNames == ["prodotto", "prezzo"])
+    #expect(reader.columnNames == ["product", "price"])
     #expect(reader.rowCount == 2)
 
     var rows: [[String]] = []
@@ -152,7 +154,7 @@ import Testing
         rows.append((0..<row.count).map { row.field(at: $0) })
     }
 
-    #expect(rows == [["mouse", "19"], ["tastiera", "49"]])
+    #expect(rows == [["mouse", "19"], ["keyboard", "49"]])
 }
 
 // Verify integer field parsing handles six edge cases:
@@ -191,11 +193,11 @@ import Testing
     let reader = try CSVReader(fileURL: url)
 
     var observations: [String] = []
-    reader.forEachRow { fuori in
-        let prima = fuori.field(at: 0)
+    reader.forEachRow { outer in
+        let before = outer.field(at: 0)
         reader.forEachRow { _ in }
-        let dopo = fuori.field(at: 0)
-        observations.append("\(prima)/\(dopo)")
+        let after = outer.field(at: 0)
+        observations.append("\(before)/\(after)")
     }
 
     #expect(observations == ["r0a/r0a", "r1a/r1a", "r2a/r2a"])

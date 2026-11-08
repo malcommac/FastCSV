@@ -30,24 +30,24 @@ private func decodingFailure<T: Decodable>(_ type: T.Type, csv: String) throws -
 // MARK: - Full roundtrip
 
 private struct BusStop: Decodable, Equatable {
-    enum Tipo: String, Decodable {
+    enum Kind: String, Decodable {
         case bus, metro
     }
 
-    let nome: String
-    let linea: Int
+    let name: String
+    let line: Int
     let lat: Double
-    let attiva: Bool
+    let active: Bool
     let note: String?
-    let tipo: Tipo
+    let kind: Kind
 }
 
 // Verify full decoding pipeline with all primitive types and enums.
 @Test func decodesAllPrimitivesPlusEnum() throws {
     let csv = """
-    nome,linea,lat,attiva,note,tipo
+    name,line,lat,active,note,kind
     Termini,64,41.9009,1,,metro
-    Colosseo,75,41.8902,0,vicino al parco,bus
+    Colosseo,75,41.8902,0,near the park,bus
 
     """
 
@@ -58,17 +58,17 @@ private struct BusStop: Decodable, Equatable {
     }
 
     #expect(stops == [
-        BusStop(nome: "Termini", linea: 64, lat: 41.9009,
-                attiva: true, note: nil, tipo: .metro),
-        BusStop(nome: "Colosseo", linea: 75, lat: 41.8902,
-                attiva: false, note: "vicino al parco", tipo: .bus),
+        BusStop(name: "Termini", line: 64, lat: 41.9009,
+                active: true, note: nil, kind: .metro),
+        BusStop(name: "Colosseo", line: 75, lat: 41.8902,
+                active: false, note: "near the park", kind: .bus),
     ])
 }
 
 // MARK: - Two errors the container distinguishes
 
 private struct WantsAMissingColumn: Decodable {
-    let inesistente: String
+    let missing: String
 }
 
 // Verify keyNotFound error when decoding type expects missing column.
@@ -135,27 +135,27 @@ private struct SingleInt8: Decodable {
 }
 
 private struct WithKind: Decodable {
-    let tipo: BusStop.Tipo
+    let kind: BusStop.Kind
 }
 
 // Verify unknown enum raw values fail decoding.
 @Test func unknownEnumRawValueFails() throws {
-    let error = try decodingFailure(WithKind.self, csv: "tipo\ntram\n")
+    let error = try decodingFailure(WithKind.self, csv: "kind\ntram\n")
     #expect(error != nil)
 }
 
 // MARK: - Flat format only
 
 private struct Nested: Decodable {
-    struct Interno: Decodable {
+    struct Inner: Decodable {
         let x: Int
     }
-    let interno: Interno
+    let inner: Inner
 }
 
 // Verify nested types are rejected with typeMismatch error.
 @Test func nestedTypeIsRejectedClearly() throws {
-    let error = try decodingFailure(Nested.self, csv: "interno\n1\n")
+    let error = try decodingFailure(Nested.self, csv: "inner\n1\n")
 
     guard case .typeMismatch? = error else {
         Issue.record("expected typeMismatch, got \(String(describing: error))")
