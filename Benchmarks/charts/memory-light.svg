@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="194" viewBox="0 0 760 194" role="img" font-family='system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif'>
+<title>Peak memory while reading stop_times.txt, per parser</title>
+<text x="0" y="16" font-size="15" font-weight="600" fill="#0b0b0b">Peak memory reading stop_times.txt</text>
+<text x="0" y="35" font-size="12.5" fill="#6b6a66">Peak resident size, lower is better</text>
+<text x="176" y="62.5" font-size="13" text-anchor="end" fill="#0b0b0b" font-weight="600">FastCSV</text>
+<path d="M188,50 h1.00 a1.0,1.0 0 0 1 1.0,1.0 v14.0 a1.0,1.0 0 0 1 -1.0,1.0 h-1.00 z" fill="#2a78d6"><title>FastCSV: 6 MB</title></path>
+<text x="198.00" y="62.5" font-size="13" fill="#0b0b0b" font-weight="600">6 MB</text>
+<text x="176" y="90.5" font-size="13" text-anchor="end" fill="#52514e">CSV.swift 2.5.2</text>
+<path d="M188,78 h1.00 a1.0,1.0 0 0 1 1.0,1.0 v14.0 a1.0,1.0 0 0 1 -1.0,1.0 h-1.00 z" fill="#898781"><title>CSV.swift 2.5.2: 6 MB</title></path>
+<text x="198.00" y="90.5" font-size="13" fill="#52514e">6 MB</text>
+<text x="176" y="118.5" font-size="13" text-anchor="end" fill="#52514e">CodableCSV 0.6.7</text>
+<path d="M188,106 h1.00 a1.0,1.0 0 0 1 1.0,1.0 v14.0 a1.0,1.0 0 0 1 -1.0,1.0 h-1.00 z" fill="#898781"><title>CodableCSV 0.6.7: 6 MB</title></path>
+<text x="198.00" y="118.5" font-size="13" fill="#52514e">6 MB</text>
+<text x="176" y="146.5" font-size="13" text-anchor="end" fill="#52514e">Naive split</text>
+<path d="M188,134 h94.58 a4,4 0 0 1 4,4 v8 a4,4 0 0 1 -4,4 h-94.58 z" fill="#898781"><title>Naive split: 647 MB</title></path>
+<text x="294.58" y="146.5" font-size="13" fill="#52514e">647 MB</text>
+<text x="176" y="174.5" font-size="13" text-anchor="end" fill="#52514e">SwiftCSV 0.10.0</text>
+<path d="M188,162 h376.00 a4,4 0 0 1 4,4 v8 a4,4 0 0 1 -4,4 h-376.00 z" fill="#898781"><title>SwiftCSV 0.10.0: 2,494 MB</title></path>
+<text x="576.00" y="174.5" font-size="13" fill="#52514e">2,494 MB</text>
+</svg>

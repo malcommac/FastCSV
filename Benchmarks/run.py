@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Runs each parser on a GTFS feed and prints a Markdown table of median results.
+"""Runs each parser on a GTFS feed, prints a Markdown table of median results
+and saves them to results.json, which charts.py turns into the README charts.
 
 Usage: swift build -c release && python3 run.py <folder with the unzipped feed>
 """
-import pathlib, re, statistics, subprocess, sys
+import json, pathlib, re, statistics, subprocess, sys
 
 RUNS, TIMEOUT = 3, 300
 FILES = ["stop_times.txt", "trips.txt"]
@@ -30,22 +31,36 @@ def run(binary, path):
     return float(seconds), int(rows), int(bytes_read), rss / 1_048_576
 
 
-def row(name, binary, path):
+def measure(name, binary, path):
     try:
         results = [run(binary, path) for _ in range(RUNS)]
     except subprocess.TimeoutExpired:
-        return f"| {name} | > {TIMEOUT} s | | | |"
+        print(f"| {name} | > {TIMEOUT} s | | | |", flush=True)
+        return None
     except subprocess.CalledProcessError as error:
-        return f"| {name} | failed: {error.stderr.strip()[:80]} | | | |"
+        print(f"| {name} | failed: {error.stderr.strip()[:80]} | | | |", flush=True)
+        return None
     seconds = statistics.median(r[0] for r in results)
     rss = statistics.median(r[3] for r in results)
-    return f"| {name} | {seconds:.3f} s | {rss:.0f} MB | {results[0][1]:,} | {results[0][2]:,} |"
+    print(f"| {name} | {seconds:.3f} s | {rss:.0f} MB | {results[0][1]:,} | {results[0][2]:,} |",
+          flush=True)
+    return {"parser": name, "seconds": round(seconds, 3), "memory_mb": round(rss)}
 
 
+report = {"files": []}
 for file in FILES:
     path = feed / file
     path.read_bytes()  # warm the page cache
-    print(f"\n### {file} ({path.stat().st_size / 1_000_000:.0f} MB)\n", flush=True)
+    size_mb = path.stat().st_size / 1_000_000
+    print(f"\n### {file} ({size_mb:.0f} MB)\n", flush=True)
     print("| Parser | Time | Peak memory | Rows | Field bytes |\n|---|---|---|---|---|", flush=True)
-    for name, binary in PARSERS + ([TYPED] if file == "stop_times.txt" else []):
-        print(row(name, binary, path), flush=True)
+    results = [measure(name, binary, path) for name, binary in PARSERS]
+    if file == "stop_times.txt":
+        measure(*TYPED, path)  # different workload: printed, not charted
+    report["files"].append({
+        "name": file,
+        "size_mb": round(size_mb),
+        "results": [r for r in results if r],
+    })
+
+(root / "results.json").write_text(json.dumps(report, indent=2) + "\n")

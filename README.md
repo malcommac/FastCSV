@@ -103,6 +103,16 @@ let config = CSVReaderConfig(delimiter: ";", hasHeaders: true)
 
 Each parser reads every row of two files from the [Rome GTFS feed](https://romamobilita.it/wp-content/uploads/shared/rome_static_gtfs.zip), downloaded on 2026-11-08, and materializes every field as a `String`. Times are the median of 3 runs.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="Benchmarks/charts/time-dark.svg">
+  <img alt="Time to read every field: on stop_times.txt FastCSV takes 0.741 s, 9.5 to 32.1 times faster than the others; on trips.txt 0.058 s, 5.2 to 16.0 times faster." src="Benchmarks/charts/time-light.svg" width="760">
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="Benchmarks/charts/memory-dark.svg">
+  <img alt="Peak memory reading stop_times.txt: 6 MB for FastCSV, CSV.swift and CodableCSV, 647 MB for the naive split, 2,494 MB for SwiftCSV." src="Benchmarks/charts/memory-light.svg" width="760">
+</picture>
+
 **`stop_times.txt`: 235 MB, 5,039,902 rows, no quotes**
 
 | Parser | Time | Compared to FastCSV | Peak memory |
@@ -139,9 +149,10 @@ To reproduce, unzip the feed and run:
 cd Benchmarks
 swift build -c release
 python3 run.py /path/to/unzipped/feed
+python3 charts.py
 ```
 
-The comparison lives in its own package, so FastCSV itself stays dependency-free.
+`run.py` saves its results to `results.json`, and `charts.py` redraws the charts above from it. The comparison lives in its own package, so FastCSV itself stays dependency-free.
 
 ## Building for Linux
 

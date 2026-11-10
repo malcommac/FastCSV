@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="406" viewBox="0 0 760 406" role="img" font-family='system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif'>
+<title>Time to read every field as a String, per parser</title>
+<text x="0" y="16" font-size="15" font-weight="600" fill="#0b0b0b">stop_times.txt</text>
+<text x="0" y="35" font-size="12.5" fill="#6b6a66">235 MB, 5 million rows, no quotes  ·  time to read every field, lower is better</text>
+<text x="176" y="62.5" font-size="13" text-anchor="end" fill="#0b0b0b" font-weight="600">FastCSV</text>
+<path d="M188,50 h7.83 a4,4 0 0 1 4,4 v8 a4,4 0 0 1 -4,4 h-7.83 z" fill="#2a78d6"><title>FastCSV: 0.741 s</title></path>
+<text x="207.83" y="62.5" font-size="13" fill="#0b0b0b" font-weight="600">0.741 s</text>
+<text x="176" y="90.5" font-size="13" text-anchor="end" fill="#52514e">Naive split</text>
+<path d="M188,78 h108.13 a4,4 0 0 1 4,4 v8 a4,4 0 0 1 -4,4 h-108.13 z" fill="#898781"><title>Naive split: 7.026 s  ·  9.5× slower</title></path>
+<text x="308.13" y="90.5" font-size="13" fill="#52514e">7.026 s  ·  9.5× slower</text>
+<text x="176" y="118.5" font-size="13" text-anchor="end" fill="#52514e">CSV.swift 2.5.2</text>
+<path d="M188,106 h127.81 a4,4 0 0 1 4,4 v8 a4,4 0 0 1 -4,4 h-127.81 z" fill="#898781"><title>CSV.swift 2.5.2: 8.259 s  ·  11.1× slower</title></path>
+<text x="327.81" y="118.5" font-size="13" fill="#52514e">8.259 s  ·  11.1× slower</text>
+<text x="176" y="146.5" font-size="13" text-anchor="end" fill="#52514e">CodableCSV 0.6.7</text>
+<path d="M188,134 h155.41 a4,4 0 0 1 4,4 v8 a4,4 0 0 1 -4,4 h-155.41 z" fill="#898781"><title>CodableCSV 0.6.7: 9.989 s  ·  13.5× slower</title></path>
+<text x="355.41" y="146.5" font-size="13" fill="#52514e">9.989 s  ·  13.5× slower</text>
+<text x="176" y="174.5" font-size="13" text-anchor="end" fill="#52514e">SwiftCSV 0.10.0</text>
+<path d="M188,162 h376.00 a4,4 0 0 1 4,4 v8 a4,4 0 0 1 -4,4 h-376.00 z" fill="#898781"><title>SwiftCSV 0.10.0: 23.811 s  ·  32.1× slower</title></path>
+<text x="576.00" y="174.5" font-size="13" fill="#52514e">23.811 s  ·  32.1× slower</text>
+<text x="0" y="228" font-size="15" font-weight="600" fill="#0b0b0b">trips.txt</text>
+<text x="0" y="247" font-size="12.5" fill="#6b6a66">11 MB, 165,520 rows, with quoted fields  ·  time to read every field, lower is better</text>
+<text x="176" y="274.5" font-size="13" text-anchor="end" fill="#0b0b0b" font-weight="600">FastCSV</text>
+<path d="M188,262 h19.75 a4,4 0 0 1 4,4 v8 a4,4 0 0 1 -4,4 h-19.75 z" fill="#2a78d6"><title>FastCSV: 0.058 s</title></path>
+<text x="219.75" y="274.5" font-size="13" fill="#0b0b0b" font-weight="600">0.058 s</text>
+<text x="176" y="302.5" font-size="13" text-anchor="end" fill="#52514e">Naive split</text>
+<path d="M188,290 h120.07 a4,4 0 0 1 4,4 v8 a4,4 0 0 1 -4,4 h-120.07 z" fill="#898781"><title>Naive split: 0.303 s  ·  5.2× slower</title></path>
+<text x="320.07" y="302.5" font-size="13" fill="#52514e">0.303 s  ·  5.2× slower</text>
+<text x="176" y="330.5" font-size="13" text-anchor="end" fill="#52514e">CSV.swift 2.5.2</text>
+<path d="M188,318 h145.87 a4,4 0 0 1 4,4 v8 a4,4 0 0 1 -4,4 h-145.87 z" fill="#898781"><title>CSV.swift 2.5.2: 0.366 s  ·  6.3× slower</title></path>
+<text x="345.87" y="330.5" font-size="13" fill="#52514e">0.366 s  ·  6.3× slower</text>
+<text x="176" y="358.5" font-size="13" text-anchor="end" fill="#52514e">CodableCSV 0.6.7</text>
+<path d="M188,346 h179.04 a4,4 0 0 1 4,4 v8 a4,4 0 0 1 -4,4 h-179.04 z" fill="#898781"><title>CodableCSV 0.6.7: 0.447 s  ·  7.7× slower</title></path>
+<text x="379.04" y="358.5" font-size="13" fill="#52514e">0.447 s  ·  7.7× slower</text>
+<text x="176" y="386.5" font-size="13" text-anchor="end" fill="#52514e">SwiftCSV 0.10.0</text>
+<path d="M188,374 h376.00 a4,4 0 0 1 4,4 v8 a4,4 0 0 1 -4,4 h-376.00 z" fill="#898781"><title>SwiftCSV 0.10.0: 0.928 s  ·  16.0× slower</title></path>
+<text x="576.00" y="386.5" font-size="13" fill="#52514e">0.928 s  ·  16.0× slower</text>
+</svg>

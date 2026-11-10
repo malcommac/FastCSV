@@ -1,0 +1,26 @@
+{
+  "files": [
+    {
+      "name": "stop_times.txt",
+      "size_mb": 235,
+      "results": [
+        {"parser": "FastCSV", "seconds": 0.741, "memory_mb": 6},
+        {"parser": "Naive split", "seconds": 7.026, "memory_mb": 647},
+        {"parser": "CSV.swift 2.5.2", "seconds": 8.259, "memory_mb": 6},
+        {"parser": "SwiftCSV 0.10.0", "seconds": 23.811, "memory_mb": 2494},
+        {"parser": "CodableCSV 0.6.7", "seconds": 9.989, "memory_mb": 6}
+      ]
+    },
+    {
+      "name": "trips.txt",
+      "size_mb": 11,
+      "results": [
+        {"parser": "FastCSV", "seconds": 0.058, "memory_mb": 6},
+        {"parser": "Naive split", "seconds": 0.303, "memory_mb": 32},
+        {"parser": "CSV.swift 2.5.2", "seconds": 0.366, "memory_mb": 6},
+        {"parser": "SwiftCSV 0.10.0", "seconds": 0.928, "memory_mb": 136},
+        {"parser": "CodableCSV 0.6.7", "seconds": 0.447, "memory_mb": 6}
+      ]
+    }
+  ]
+}
